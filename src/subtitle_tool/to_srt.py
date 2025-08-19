@@ -4,6 +4,7 @@ import csv
 from collections.abc import Iterable
 from collections.abc import Iterator
 from dataclasses import dataclass
+from dataclasses import replace
 from functools import reduce
 from itertools import groupby
 from pathlib import Path
@@ -79,18 +80,29 @@ def merge_input_lines(lines: list[InputLine]) -> list[InputLine]:
     ]
 
 
-def massage_timestamps(blocks: list[Block], min_gap_ms: int = 200) -> None:
-    for this, next in zip(blocks, blocks[1:]):
-        this.to_ts_ms = min(this.to_ts_ms, next.from_ts_ms - min_gap_ms)
+def massage_timestamps(
+    lines: list[InputLine], min_gap_ms: int = 200
+) -> list[InputLine]:
+    res = []
+
+    for this, next in zip(lines, lines[1:] + [None]):
+        to_ts_ms = this.to_ts_ms
+
+        if next is not None:
+            this = replace(this, to_ts_ms=min(to_ts_ms, next.from_ts_ms - min_gap_ms))
+
+        res.append(this)
+
+    return res
 
 
-def convert_file(input_path: Path, output_path: Path, config: ToSRTConfig) -> None:
+def read_input_lines(input_path: Path) -> list[InputLine]:
+    res = []
+
     with input_path.open("rt") as in_file:
         reader = csv.reader(in_file)
         column_names = next(reader)
         lines = list(reader)
-
-    input_lines = []
 
     for values in lines:
 
@@ -104,16 +116,22 @@ def convert_file(input_path: Path, output_path: Path, config: ToSRTConfig) -> No
         line_1 = join_line(iter_by_column_name("Line 1"))
         line_2 = join_line(iter_by_column_name("Line 2"))
 
-        input_lines.append(
+        res.append(
             InputLine(
                 from_ts_ms=from_ts_ms, to_ts_ms=to_ts_ms, line_1=line_1, line_2=line_2
             )
         )
 
-    blocks = [i.as_block for i in merge_input_lines(input_lines)]
-    massage_timestamps(blocks)
+    return res
 
-    write_srt_file(output_path, SRTFile(blocks=blocks))
+
+def convert_file(input_path: Path, output_path: Path, config: ToSRTConfig) -> None:
+    input_lines = read_input_lines(input_path)
+    input_lines = merge_input_lines(input_lines)
+    input_lines = massage_timestamps(input_lines)
+
+    srt_file = SRTFile(blocks=[i.as_block for i in merge_input_lines(input_lines)])
+    write_srt_file(output_path, srt_file)
 
 
 def to_srt_command(root_dir: Path) -> None:
