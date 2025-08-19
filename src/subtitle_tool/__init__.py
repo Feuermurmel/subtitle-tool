@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from subtitle_tool.to_csv import to_csv_command
+from subtitle_tool.to_srt import to_srt_command
 
 
 class UserError(Exception):
@@ -21,11 +22,16 @@ def parse_args() -> Namespace:
         "root_dir", nargs="?", type=Path, default=Path("../subtitles")
     )
 
+    to_srt_parser = subparsers.add_parser("to-srt")
+    to_srt_parser.add_argument(
+        "root_dir", nargs="?", type=Path, default=Path("../subtitles")
+    )
+
     return parser.parse_args()
 
 
 def main(command: str, **kwargs: Any) -> None:
-    commands = {"to-csv": to_csv_command}
+    commands = {"to-csv": to_csv_command, "to-srt": to_srt_command}
 
     commands[command](**kwargs)
 

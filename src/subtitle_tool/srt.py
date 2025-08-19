@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from itertools import groupby
 from pathlib import Path
+from pprint import pformat
 
 
 @dataclass(kw_only=True)
@@ -56,3 +57,30 @@ def read_srt_file(path: Path) -> SRTFile:
             blocks.append(Block(from_ts_ms=from_ts_ms, to_ts_ms=to_ts_ms, lines=lines))
 
     return SRTFile(blocks=blocks)
+
+
+def write_srt_file(path: Path, file: SRTFile) -> None:
+    for a, b in zip(file.blocks, file.blocks[1:]):
+        assert a.from_ts_ms < b.to_ts_ms, f"Non-positive interval:\b{pformat(a)}"
+        assert (
+            a.to_ts_ms < b.from_ts_ms
+        ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
+
+    with path.open("wt") as output_file:
+        for seq, block in enumerate(file.blocks, 1):
+            print(seq, file=output_file)
+            print(
+                f"{format_ts(block.from_ts_ms)} --> {format_ts(block.to_ts_ms)}",
+                file=output_file,
+            )
+
+            for line in block.lines:
+                line = line.strip()
+
+                if not line:
+                    # lolololol
+                    line = "<i>\xa0</i>"
+
+                print(line, file=output_file)
+
+            print(file=output_file)

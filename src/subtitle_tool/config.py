@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from dataclasses import field
 from pathlib import Path
 
 import toml
@@ -9,13 +8,19 @@ from mashumaro.codecs import BasicDecoder
 
 
 @dataclass
-class ConfigToCSV:
+class ToCSVConfig:
     delay_ms: int = 0
 
 
 @dataclass
+class ToSRTConfig:
+    pass
+
+
+@dataclass
 class Config:
-    to_csv: ConfigToCSV = field(default_factory=ConfigToCSV)
+    to_csv: ToCSVConfig | None = None
+    to_srt: ToSRTConfig | None = None
 
     @classmethod
     def load(cls, path: Path) -> Config:
