@@ -18,13 +18,11 @@ def convert_file(input_path: Path, output_path: Path, config: ToCSVConfig) -> No
         writer.writerow(("From", "To", "From (ms)", "Line 1", "Line 2"))
 
         for i in file.blocks:
+            from_ts_ms = i.from_ts_ms + config.delay_ms
+            to_ts_ms = i.to_ts_ms + config.delay_ms
+
             writer.writerow(
-                (
-                    format_ts(i.from_ts_ms + config.delay_ms),
-                    format_ts(i.to_ts_ms + config.delay_ms),
-                    i.from_ts_ms,
-                    *i.lines,
-                )
+                (format_ts(from_ts_ms), format_ts(to_ts_ms), from_ts_ms, *i.lines)
             )
 
     print(f"Wrote {len(file.blocks)} blocks to {output_path}.")
