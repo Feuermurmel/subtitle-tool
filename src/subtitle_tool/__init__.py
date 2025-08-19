@@ -18,14 +18,10 @@ def parse_args() -> Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     to_csv_parser = subparsers.add_parser("to-csv")
-    to_csv_parser.add_argument(
-        "root_dir", nargs="?", type=Path, default=Path("../subtitles")
-    )
+    to_csv_parser.add_argument("root_dir", nargs="?", type=Path, default=Path())
 
     to_srt_parser = subparsers.add_parser("to-srt")
-    to_srt_parser.add_argument(
-        "root_dir", nargs="?", type=Path, default=Path("../subtitles")
-    )
+    to_srt_parser.add_argument("root_dir", nargs="?", type=Path, default=Path())
 
     return parser.parse_args()
 
