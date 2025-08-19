@@ -3,13 +3,13 @@ name = "subtitle_tool"
 version = "0.1.0"
 
 requires-python = ">= 3.12"
-dependencies = []
+dependencies = ["mashumaro", "toml"]
 
 [project.optional-dependencies]
-dev = ["pytest", "mypy"]
+dev = ["pytest", "mypy", "types-toml"]
 
 [project.scripts]
-subtitle-tool = "subtitle_tool:entry_point"
+st = "subtitle_tool:entry_point"
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR/src:$MYPY_CONFIG_FILE_DIR/tests"
