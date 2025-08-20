@@ -20,22 +20,29 @@ class SRTFile:
 
 
 def parse_ts(ts_str: str) -> int:
-    match = re.fullmatch(r"(\d\d):(\d\d):(\d\d),(\d\d\d)", ts_str)
+    match = re.fullmatch(r"(-?)(\d\d):(\d\d):(\d\d),(\d\d\d)", ts_str)
     assert match
-    h = int(match.group(1))
-    m = int(match.group(2))
-    s = int(match.group(3))
-    ms = int(match.group(4))
+    sign = -1 if match.group(1) else 1
+    h = int(match.group(2))
+    m = int(match.group(3))
+    s = int(match.group(4))
+    ms = int(match.group(5))
 
-    return ms + 1000 * (s + 60 * (m + 60 * h))
+    return sign * (ms + 1000 * (s + 60 * (m + 60 * h)))
 
 
 def format_ts(ts_ms: int) -> str:
+    if ts_ms < 0:
+        sign = "-"
+        ts_ms = -ts_ms
+    else:
+        sign = ""
+
     rest, ms = divmod(ts_ms, 1000)
     rest, s = divmod(rest, 60)
     h, m = divmod(rest, 60)
 
-    return f"{h:02}:{m:02}:{s:02},{ms:03}"
+    return f"{sign}{h:02}:{m:02}:{s:02},{ms:03}"
 
 
 def read_srt_file(path: Path) -> SRTFile:
@@ -61,6 +68,7 @@ def read_srt_file(path: Path) -> SRTFile:
 
 def write_srt_file(path: Path, file: SRTFile) -> None:
     for a, b in zip(file.blocks, file.blocks[1:]):
+        assert a.from_ts_ms >= 0, f"Negative timestamp:\b{pformat(a)}"
         assert a.from_ts_ms < b.to_ts_ms, f"Non-positive interval:\b{pformat(a)}"
         assert (
             a.to_ts_ms < b.from_ts_ms
