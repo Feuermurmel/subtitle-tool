@@ -48,6 +48,9 @@ class InputLine:
     line_2: str
 
     def __add__(self, other: InputLine) -> InputLine:
+        # Lines that don't overlap should not be joined, except when the second line is empty.
+        assert self.to_ts_ms >= other.from_ts_ms or not (other.line_1 or other.line_2)
+
         return InputLine(
             from_ts_ms=min(self.from_ts_ms, other.from_ts_ms),
             to_ts_ms=max(self.to_ts_ms, other.to_ts_ms),
@@ -64,20 +67,42 @@ class InputLine:
         )
 
 
-def merge_input_lines(lines: list[InputLine]) -> list[InputLine]:
+def merge_lines(lines: Iterable[tuple[bool, InputLine]]) -> list[InputLine]:
     def iter_lines_with_keys() -> Iterator[tuple[int, InputLine]]:
-        seq = 0
+        key = 0
 
-        for prev, this in zip([None, *lines], lines):
-            if prev is None or prev.line_2 or this.line_1:
-                seq += 1
-
-            yield seq, this
+        for join, line in lines:
+            key += not join
+            yield key, line
 
     return [
         reduce(lambda a, b: a + b, (i for _, i in lines_iter))
         for _, lines_iter in groupby(iter_lines_with_keys(), lambda x: x[0])
     ]
+
+
+def merge_input_lines(lines: list[InputLine]) -> list[InputLine]:
+    def join(prev: InputLine, this: InputLine) -> bool:
+        # Always join empty lines into the previous line.
+        if not this.line_1 and not this.line_2:
+            return True
+
+        # Don't join lines that don't overlap.
+        if prev.to_ts_ms < this.from_ts_ms:
+            return False
+
+        # Don't join consecutive items occupying the same line or when
+        # switching back from line 2 to line 1.
+        if this.line_1 or prev.line_2:
+            return False
+
+        # Otherwise join.
+        return True
+
+    return merge_lines(
+        (prev is not None and join(prev, this), this)
+        for prev, this in zip([None, *lines], lines)
+    )
 
 
 def massage_timestamps(
