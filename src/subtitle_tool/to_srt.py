@@ -50,7 +50,7 @@ class InputLine:
     def __add__(self, other: InputLine) -> InputLine:
         return InputLine(
             from_ts_ms=min(self.from_ts_ms, other.from_ts_ms),
-            to_ts_ms=min(self.to_ts_ms, other.to_ts_ms),
+            to_ts_ms=max(self.to_ts_ms, other.to_ts_ms),
             line_1=join_line([self.line_1, other.line_1]),
             line_2=join_line([self.line_2, other.line_2]),
         )
