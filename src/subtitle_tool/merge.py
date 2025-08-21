@@ -8,6 +8,7 @@ from dataclasses import replace
 from functools import reduce
 from itertools import groupby
 from pathlib import Path
+from pprint import pformat
 
 from subtitle_tool.srt import Block
 from subtitle_tool.srt import SRTFile
@@ -45,7 +46,9 @@ class InputLine:
 
     def __add__(self, other: InputLine) -> InputLine:
         # Lines that don't overlap should not be joined, except when the second line is empty.
-        assert self.to_ts_ms >= other.from_ts_ms or not (other.line_1 or other.line_2)
+        assert self.to_ts_ms >= other.from_ts_ms or not (
+            other.line_1 or other.line_2
+        ), f"Joining non-overlapping lines:\n{pformat(self)}\n{pformat(other)}"
 
         return InputLine(
             from_ts_ms=min(self.from_ts_ms, other.from_ts_ms),

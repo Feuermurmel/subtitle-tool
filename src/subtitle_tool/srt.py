@@ -97,9 +97,11 @@ def read_srt_file(path: Path) -> SRTFile:
 
 def write_srt_file(path: Path, file: SRTFile, *, validate: bool = True) -> None:
     if validate:
+        for i in file.blocks:
+            assert i.from_ts_ms >= 0, f"Negative timestamp:\n{pformat(i)}"
+            assert i.from_ts_ms < i.to_ts_ms, f"Non-positive interval:\n{pformat(i)}"
+
         for a, b in zip(file.blocks, file.blocks[1:]):
-            assert a.from_ts_ms >= 0, f"Negative timestamp:\b{pformat(a)}"
-            assert a.from_ts_ms < b.to_ts_ms, f"Non-positive interval:\b{pformat(a)}"
             assert (
                 a.to_ts_ms < b.from_ts_ms
             ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
