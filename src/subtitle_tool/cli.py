@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from subtitle_tool.combine import combine_command
 from subtitle_tool.convert import convert_command
 from subtitle_tool.play import play_command
 from subtitle_tool.srt import parse_ts
@@ -28,6 +29,12 @@ def parse_args() -> Namespace:
     csv_parser.add_argument("input_file", type=Path)
     csv_parser.add_argument("-o", "--output", type=Path, required=True)
 
+    combine_parser = subparsers.add_parser("combine")
+    combine_parser.add_argument("input_file_1", type=Path)
+    combine_parser.add_argument("input_file_2", type=Path)
+    combine_parser.add_argument("--sort-delay", type=parse_ts, default=1000)
+    combine_parser.add_argument("-o", "--output", type=Path, required=True)
+
     return parser.parse_args()
 
 
@@ -35,6 +42,7 @@ def main(command: str, **kwargs: Any) -> None:
     commands: dict[str, Callable[..., None]] = {
         "play": play_command,
         "convert": convert_command,
+        "combine": combine_command,
     }
 
     commands[command](**kwargs)

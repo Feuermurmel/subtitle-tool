@@ -7,7 +7,7 @@ from subtitle_tool.srt import read_srt_file
 from subtitle_tool.utils import UserError
 
 
-def read_input(path: Path, delay_ms: int | None) -> tuple[SRTFile, Config]:
+def read_input(path: Path, delay_ms: int | None = None) -> tuple[SRTFile, Config]:
     config = Config.load(path.with_suffix(".toml"))
 
     if delay_ms is None:
