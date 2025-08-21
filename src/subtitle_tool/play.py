@@ -17,8 +17,11 @@ def play_command(
 ) -> None:
     with TemporaryDirectory() as temp_dir:
         temp_srt_path = Path(temp_dir) / "temp.srt"
-        srt_file, config = read_input(input_file, delay_ms)
+        srt_file, config = read_input(input_file, 0)
         write_srt_file(temp_srt_path, srt_file, validate=False)
+
+        if delay_ms is None:
+            delay_ms = config.delay_ms
 
         cmdline = [
             "mpv",
@@ -26,6 +29,7 @@ def play_command(
             "--osd-fractions",
             "--sid=1",
             f"--sub-file={temp_srt_path}",
+            f"--sub-delay={delay_ms / 1000:0.3f}",
         ]
 
         if start_at_id is not None:
