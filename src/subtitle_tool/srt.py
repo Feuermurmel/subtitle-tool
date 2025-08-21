@@ -49,7 +49,7 @@ def parse_ts(ts_str: str) -> int:
     raise ValueError(f"Invalid timestamp: {ts_str}")
 
 
-def format_ts(ts_ms: int) -> str:
+def format_ts(ts_ms: int, *, include_ms: bool = True) -> str:
     if ts_ms < 0:
         sign = "-"
         ts_ms = -ts_ms
@@ -59,8 +59,12 @@ def format_ts(ts_ms: int) -> str:
     rest, ms = divmod(ts_ms, 1000)
     rest, s = divmod(rest, 60)
     h, m = divmod(rest, 60)
+    result = f"{sign}{h:02}:{m:02}:{s:02}"
 
-    return f"{sign}{h:02}:{m:02}:{s:02},{ms:03}"
+    if include_ms:
+        result += f",{ms:03}"
+
+    return result
 
 
 def read_srt_file(path: Path) -> SRTFile:
@@ -91,13 +95,14 @@ def read_srt_file(path: Path) -> SRTFile:
         raise
 
 
-def write_srt_file(path: Path, file: SRTFile) -> None:
-    for a, b in zip(file.blocks, file.blocks[1:]):
-        assert a.from_ts_ms >= 0, f"Negative timestamp:\b{pformat(a)}"
-        assert a.from_ts_ms < b.to_ts_ms, f"Non-positive interval:\b{pformat(a)}"
-        assert (
-            a.to_ts_ms < b.from_ts_ms
-        ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
+def write_srt_file(path: Path, file: SRTFile, *, validate: bool = True) -> None:
+    if validate:
+        for a, b in zip(file.blocks, file.blocks[1:]):
+            assert a.from_ts_ms >= 0, f"Negative timestamp:\b{pformat(a)}"
+            assert a.from_ts_ms < b.to_ts_ms, f"Non-positive interval:\b{pformat(a)}"
+            assert (
+                a.to_ts_ms < b.from_ts_ms
+            ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
 
     with path.open("wt") as output_file:
         for seq, block in enumerate(file.blocks, 1):

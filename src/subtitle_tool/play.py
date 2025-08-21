@@ -18,7 +18,7 @@ def play_command(
     with TemporaryDirectory() as temp_dir:
         temp_srt_path = Path(temp_dir) / "temp.srt"
         srt_file, config = read_input(input_file, delay_ms)
-        write_srt_file(temp_srt_path, srt_file)
+        write_srt_file(temp_srt_path, srt_file, validate=False)
 
         cmdline = [
             "mpv",
