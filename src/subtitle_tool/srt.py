@@ -46,24 +46,31 @@ def format_ts(ts_ms: int) -> str:
 
 
 def read_srt_file(path: Path) -> SRTFile:
-    blocks = []
+    try:
+        blocks = []
 
-    for k, group_iter in groupby(path.read_text().splitlines(), key=bool):
-        if k:
-            _seq, timestamps_str, *lines = group_iter
-            from_ts_str, sep, to_ts_str = timestamps_str.partition(" --> ")
-            assert sep, timestamps_str
+        for k, group_iter in groupby(path.read_text().splitlines(), key=bool):
+            if k:
+                _seq, timestamps_str, *lines = group_iter
+                from_ts_str, sep, to_ts_str = timestamps_str.partition(" --> ")
+                assert sep, timestamps_str
 
-            # Debug: Check roundtrip.
-            assert format_ts(parse_ts(from_ts_str)) == from_ts_str
-            assert format_ts(parse_ts(to_ts_str)) == to_ts_str
+                # Debug: Check roundtrip.
+                assert format_ts(parse_ts(from_ts_str)) == from_ts_str
+                assert format_ts(parse_ts(to_ts_str)) == to_ts_str
 
-            from_ts_ms = parse_ts(from_ts_str)
-            to_ts_ms = parse_ts(to_ts_str)
+                from_ts_ms = parse_ts(from_ts_str)
+                to_ts_ms = parse_ts(to_ts_str)
 
-            blocks.append(Block(from_ts_ms=from_ts_ms, to_ts_ms=to_ts_ms, lines=lines))
+                blocks.append(
+                    Block(from_ts_ms=from_ts_ms, to_ts_ms=to_ts_ms, lines=lines)
+                )
 
-    return SRTFile(blocks=blocks)
+        return SRTFile(blocks=blocks)
+    except Exception as e:
+        e.add_note(f"While loading file {path}.")
+
+        raise
 
 
 def write_srt_file(path: Path, file: SRTFile) -> None:

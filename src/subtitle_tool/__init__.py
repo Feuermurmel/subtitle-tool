@@ -2,9 +2,11 @@ import logging
 import sys
 from argparse import ArgumentParser
 from argparse import Namespace
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from subtitle_tool.flatten_srt import flatten_srt_command
 from subtitle_tool.to_csv import to_csv_command
 from subtitle_tool.to_srt import to_srt_command
 
@@ -23,11 +25,18 @@ def parse_args() -> Namespace:
     to_srt_parser = subparsers.add_parser("to-srt")
     to_srt_parser.add_argument("root_dir", nargs="?", type=Path, default=Path())
 
+    flatten_srt_parser = subparsers.add_parser("flatten-srt")
+    flatten_srt_parser.add_argument("files", nargs="+", type=Path)
+
     return parser.parse_args()
 
 
 def main(command: str, **kwargs: Any) -> None:
-    commands = {"to-csv": to_csv_command, "to-srt": to_srt_command}
+    commands: dict[str, Callable[..., None]] = {
+        "to-csv": to_csv_command,
+        "to-srt": to_srt_command,
+        "flatten-srt": flatten_srt_command,
+    }
 
     commands[command](**kwargs)
 
