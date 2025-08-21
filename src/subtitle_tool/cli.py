@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from subtitle_tool.convert import convert_command
+from subtitle_tool.play import play_command
 from subtitle_tool.srt import parse_ts
 from subtitle_tool.utils import UserError
 
@@ -14,6 +15,13 @@ from subtitle_tool.utils import UserError
 def parse_args() -> Namespace:
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    play_parser = subparsers.add_parser("play")
+    play_parser.add_argument("-d", "--delay", type=parse_ts, dest="delay_ms")
+    play_parser.add_argument("--start-at-id", type=int)
+    play_parser.add_argument("video_file", type=Path)
+    play_parser.add_argument("input_file", type=Path)
+    play_parser.add_argument("mpv_args", nargs="*")
 
     csv_parser = subparsers.add_parser("convert")
     csv_parser.add_argument("-d", "--delay", type=parse_ts, dest="delay_ms")
@@ -24,7 +32,10 @@ def parse_args() -> Namespace:
 
 
 def main(command: str, **kwargs: Any) -> None:
-    commands: dict[str, Callable[..., None]] = {"convert": convert_command}
+    commands: dict[str, Callable[..., None]] = {
+        "play": play_command,
+        "convert": convert_command,
+    }
 
     commands[command](**kwargs)
 
