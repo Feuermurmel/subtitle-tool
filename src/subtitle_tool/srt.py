@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from dataclasses import replace
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
@@ -18,17 +19,34 @@ class Block:
 class SRTFile:
     blocks: list[Block]
 
+    def add_delay(self, delay_ms: int) -> SRTFile:
+        if not delay_ms:
+            return self
+
+        blocks = [
+            replace(
+                i, from_ts_ms=i.from_ts_ms + delay_ms, to_ts_ms=i.to_ts_ms + delay_ms
+            )
+            for i in self.blocks
+        ]
+
+        return replace(self, blocks=blocks)
+
 
 def parse_ts(ts_str: str) -> int:
-    match = re.fullmatch(r"(-?)(\d\d):(\d\d):(\d\d),(\d\d\d)", ts_str)
-    assert match
-    sign = -1 if match.group(1) else 1
-    h = int(match.group(2))
-    m = int(match.group(3))
-    s = int(match.group(4))
-    ms = int(match.group(5))
+    if match := re.fullmatch(r"-?\d+", ts_str):
+        return int(match.group())
 
-    return sign * (ms + 1000 * (s + 60 * (m + 60 * h)))
+    if match := re.fullmatch(r"(-?)(\d\d):(\d\d):(\d\d),(\d\d\d)", ts_str):
+        sign = -1 if match.group(1) else 1
+        h = int(match.group(2))
+        m = int(match.group(3))
+        s = int(match.group(4))
+        ms = int(match.group(5))
+
+        return sign * (ms + 1000 * (s + 60 * (m + 60 * h)))
+
+    raise ValueError(f"Invalid timestamp: {ts_str}")
 
 
 def format_ts(ts_ms: int) -> str:

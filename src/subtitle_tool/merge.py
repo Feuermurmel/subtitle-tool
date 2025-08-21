@@ -9,13 +9,9 @@ from functools import reduce
 from itertools import groupby
 from pathlib import Path
 
-from subtitle_tool.config import Config
-from subtitle_tool.config import ToSRTConfig
 from subtitle_tool.srt import Block
 from subtitle_tool.srt import SRTFile
 from subtitle_tool.srt import parse_ts
-from subtitle_tool.srt import write_srt_file
-from subtitle_tool.utils import iter_files
 
 
 def join_line(parts: Iterable[str]) -> str:
@@ -150,20 +146,9 @@ def read_input_lines(input_path: Path) -> list[InputLine]:
     return res
 
 
-def convert_file(input_path: Path, output_path: Path, config: ToSRTConfig) -> None:
-    input_lines = read_input_lines(input_path)
+def read_combined_csv(path: Path) -> SRTFile:
+    input_lines = read_input_lines(path)
     input_lines = merge_input_lines(input_lines)
     input_lines = massage_timestamps(input_lines)
 
-    srt_file = SRTFile(blocks=[i.as_block for i in merge_input_lines(input_lines)])
-    write_srt_file(output_path, srt_file)
-
-
-def to_srt_command(root_dir: Path) -> None:
-    for i in iter_files(root_dir):
-        if i.suffix == ".csv":
-            output_path = i.with_suffix(".srt")
-            config = Config.load(i.with_suffix(".toml"))
-
-            if config.to_srt:
-                convert_file(i, output_path, config.to_srt)
+    return SRTFile(blocks=[i.as_block for i in merge_input_lines(input_lines)])

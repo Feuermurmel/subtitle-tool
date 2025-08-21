@@ -8,19 +8,8 @@ from mashumaro.codecs import BasicDecoder
 
 
 @dataclass
-class ToCSVConfig:
-    delay_ms: int = 0
-
-
-@dataclass
-class ToSRTConfig:
-    pass
-
-
-@dataclass
 class Config:
-    to_csv: ToCSVConfig | None = None
-    to_srt: ToSRTConfig | None = None
+    delay_ms: int = 0
 
     @classmethod
     def load(cls, path: Path) -> Config:
