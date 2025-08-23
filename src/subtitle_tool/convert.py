@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 from subtitle_tool.csv import write_csv_file
@@ -6,6 +5,7 @@ from subtitle_tool.inputs import read_input
 from subtitle_tool.merge import join_line
 from subtitle_tool.srt import SRTFile
 from subtitle_tool.srt import format_ts
+from subtitle_tool.srt import strip_formatting
 from subtitle_tool.srt import write_srt_file
 from subtitle_tool.utils import UserError
 
@@ -15,7 +15,7 @@ def write_flat_txt_file(output_path: Path, srt_file: SRTFile) -> None:
         prev_from_ts_ms = 0
 
         for block in srt_file.blocks:
-            joined_line = re.sub("<.+?>", "", join_line(block.lines))
+            joined_line = strip_formatting(join_line(block.lines))
 
             for s in range(prev_from_ts_ms // 1000, block.from_ts_ms // 1000):
                 print(format_ts(s * 1000, include_ms=False), file=out_file)

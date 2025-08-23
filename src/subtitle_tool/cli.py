@@ -8,6 +8,7 @@ from typing import Any
 
 from subtitle_tool.combine import combine_command
 from subtitle_tool.convert import convert_command
+from subtitle_tool.lint import lint_command
 from subtitle_tool.play import play_command
 from subtitle_tool.srt import parse_ts
 from subtitle_tool.utils import UserError
@@ -24,10 +25,15 @@ def parse_args() -> Namespace:
     play_parser.add_argument("input_file", type=Path)
     play_parser.add_argument("mpv_args", nargs="*")
 
-    csv_parser = subparsers.add_parser("convert")
-    csv_parser.add_argument("-d", "--delay", type=parse_ts, dest="delay_ms")
-    csv_parser.add_argument("input_file", type=Path)
-    csv_parser.add_argument("-o", "--output", type=Path, required=True)
+    lint_parser = subparsers.add_parser("lint")
+    lint_parser.add_argument("-d", "--delay", type=parse_ts, dest="delay_ms")
+    lint_parser.add_argument("--empty-lines", action="store_true")
+    lint_parser.add_argument("input_file", type=Path)
+
+    convert_parser = subparsers.add_parser("convert")
+    convert_parser.add_argument("-d", "--delay", type=parse_ts, dest="delay_ms")
+    convert_parser.add_argument("input_file", type=Path)
+    convert_parser.add_argument("-o", "--output", type=Path, required=True)
 
     combine_parser = subparsers.add_parser("combine")
     combine_parser.add_argument("input_file_1", type=Path)
@@ -41,6 +47,7 @@ def parse_args() -> Namespace:
 def main(command: str, **kwargs: Any) -> None:
     commands: dict[str, Callable[..., None]] = {
         "play": play_command,
+        "lint": lint_command,
         "convert": convert_command,
         "combine": combine_command,
     }

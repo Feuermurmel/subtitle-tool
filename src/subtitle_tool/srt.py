@@ -6,6 +6,11 @@ from dataclasses import replace
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
+from typing import override
+
+
+def strip_formatting(line: str) -> str:
+    return re.sub(r"<.+?>|\{\\.+?}", "", line).strip()
 
 
 @dataclass(kw_only=True)
