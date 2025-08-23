@@ -19,6 +19,14 @@ class Block:
     to_ts_ms: int
     lines: list[str]
 
+    @override
+    def __repr__(self) -> str:
+        return (
+            f"Block("
+            f"{format_ts(self.from_ts_ms)} --> {format_ts(self.to_ts_ms)}, {self.lines}"
+            f")"
+        )
+
 
 @dataclass(kw_only=True)
 class SRTFile:
@@ -42,7 +50,7 @@ def parse_ts(ts_str: str) -> int:
     if match := re.fullmatch(r"-?\d+", ts_str):
         return int(match.group())
 
-    if match := re.fullmatch(r"(-?)(\d\d):(\d\d):(\d\d),(\d\d\d)", ts_str):
+    if match := re.fullmatch(r"(-?)(\d\d):(\d\d):(\d\d)[.,](\d\d\d)", ts_str):
         sign = -1 if match.group(1) else 1
         h = int(match.group(2))
         m = int(match.group(3))
@@ -106,10 +114,10 @@ def write_srt_file(path: Path, file: SRTFile, *, validate: bool = True) -> None:
             assert i.from_ts_ms >= 0, f"Negative timestamp:\n{pformat(i)}"
             assert i.from_ts_ms < i.to_ts_ms, f"Non-positive interval:\n{pformat(i)}"
 
-        for a, b in zip(file.blocks, file.blocks[1:]):
-            assert (
-                a.to_ts_ms < b.from_ts_ms
-            ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
+        # for a, b in zip(file.blocks, file.blocks[1:]):
+        #     assert (
+        #         a.to_ts_ms < b.from_ts_ms
+        #     ), f"Timestamps overlap:\n{pformat(a)}\n{pformat(b)}"
 
     with path.open("wt") as output_file:
         for seq, block in enumerate(file.blocks, 1):

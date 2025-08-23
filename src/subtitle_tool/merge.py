@@ -44,6 +44,9 @@ class InputLine:
     line_1: str
     line_2: str
 
+    # Displayed at an8.
+    line_3: str
+
     def __add__(self, other: InputLine) -> InputLine:
         # Lines that don't overlap should not be joined, except when the second line is empty.
         assert self.to_ts_ms >= other.from_ts_ms or not (
@@ -55,15 +58,32 @@ class InputLine:
             to_ts_ms=max(self.to_ts_ms, other.to_ts_ms),
             line_1=join_line([self.line_1, other.line_1]),
             line_2=join_line([self.line_2, other.line_2]),
+            line_3=join_line([self.line_3, other.line_3]),
         )
 
     @property
-    def as_block(self) -> Block:
-        return Block(
-            from_ts_ms=self.from_ts_ms,
-            to_ts_ms=self.to_ts_ms,
-            lines=[self.line_1, self.line_2],
-        )
+    def as_blocks(self) -> list[Block]:
+        blocks = []
+
+        if self.line_1 or self.line_2:
+            blocks.append(
+                Block(
+                    from_ts_ms=self.from_ts_ms,
+                    to_ts_ms=self.to_ts_ms,
+                    lines=[self.line_1, f'<font color="#FFE4C4">{self.line_2}</font>'],
+                )
+            )
+
+        if self.line_3:
+            blocks.append(
+                Block(
+                    from_ts_ms=self.from_ts_ms,
+                    to_ts_ms=self.to_ts_ms,
+                    lines=[r"{\an8}" + f'<font color="#CDFFD5">{self.line_3}</font>'],
+                )
+            )
+
+        return blocks
 
 
 def merge_lines(lines: Iterable[tuple[bool, InputLine]]) -> list[InputLine]:
@@ -83,7 +103,7 @@ def merge_lines(lines: Iterable[tuple[bool, InputLine]]) -> list[InputLine]:
 def merge_input_lines(lines: list[InputLine]) -> list[InputLine]:
     def join(prev: InputLine, this: InputLine) -> bool:
         # Always join empty lines into the previous line.
-        if not this.line_1 and not this.line_2:
+        if not any([this.line_1, this.line_2, this.line_3]):
             return True
 
         # Don't join lines that don't overlap.
@@ -92,7 +112,7 @@ def merge_input_lines(lines: list[InputLine]) -> list[InputLine]:
 
         # Don't join consecutive items occupying the same line or when
         # switching back from line 2 to line 1.
-        if this.line_1 or prev.line_2:
+        if this.line_1 or prev.line_2 and this.line_2 or prev.line_3:
             return False
 
         # Otherwise join.
@@ -139,10 +159,15 @@ def read_input_lines(input_path: Path) -> list[InputLine]:
         to_ts_ms = parse_ts(next(iter_by_column_name("To")))
         line_1 = join_line(iter_by_column_name("Line 1"))
         line_2 = join_line(iter_by_column_name("Line 2"))
+        line_3 = join_line(iter_by_column_name("Line 3"))
 
         res.append(
             InputLine(
-                from_ts_ms=from_ts_ms, to_ts_ms=to_ts_ms, line_1=line_1, line_2=line_2
+                from_ts_ms=from_ts_ms,
+                to_ts_ms=to_ts_ms,
+                line_1=line_1,
+                line_2=line_2,
+                line_3=line_3,
             )
         )
 
@@ -154,4 +179,6 @@ def read_combined_csv(path: Path) -> SRTFile:
     input_lines = merge_input_lines(input_lines)
     input_lines = massage_timestamps(input_lines)
 
-    return SRTFile(blocks=[i.as_block for i in merge_input_lines(input_lines)])
+    return SRTFile(
+        blocks=[j for i in merge_input_lines(input_lines) for j in i.as_blocks]
+    )
